@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3D Plane & Point Plotter</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #161b2e;
+      --text: #e6e9f0;
+      --muted: #9aa3b2;
+      --accent: #56ccf2;
+      --accent-2: #a66df2;
+      --danger: #ff6b6b;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
+    }
+    header { padding: 12px 16px; border-bottom: 1px solid #1f2440; display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+    #sidebar { grid-area: sidebar; overflow: auto; padding: 12px; background: var(--panel); border-right: 1px solid #1f2440; }
+    #main { grid-area: main; position: relative; }
+    #scene { position: absolute; inset: 0; }
+
+    .section { border: 1px solid #212743; border-radius: 10px; padding: 10px; margin-bottom: 12px; background: #131831; }
+    .section h2 { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-weight: 600; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .row label { font-size: 12px; color: var(--muted); }
+    input[type="number"], input[type="text"], select {
+      width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 8px; border: 1px solid #2a325c; background: #0e1330; color: var(--text);
+    }
+    input[type="range"] { width: 100%; }
+    .controls { display: grid; gap: 8px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #2a325c; color: var(--text);
+      background: linear-gradient(180deg, #1b2142, #10163a); border-radius: 8px; cursor: pointer; font-size: 12px;
+    }
+    .btn.primary { border-color: #2d6ae3; background: linear-gradient(180deg, #2b3f7c, #172355); }
+    .btn.danger { border-color: #803; background: linear-gradient(180deg, #512, #301); color: #ffd7d7; }
+    .grid { display: grid; gap: 8px; }
+    .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid #2a325c; background:#10163a; font-size:11px; color:var(--muted); }
+    .small { font-size: 11px; color: var(--muted); }
+    .plane-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px; border:1px solid #252c54; border-radius:8px; background:#0f1538; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>3D Plane & Point Plotter</h1>
+    <span class="chip">Three.js • Front-end only</span>
+  </header>
+  <aside id="sidebar" style="position:fixed; left:12px; top:60px; width:320px; max-height:calc(100vh - 72px); overflow:auto; background:#161b2e; border:1px solid #1f2440; border-radius:10px; padding:10px; z-index:10;">
+    <div class="section">
+      <h2>Create Plane</h2>
+      <label>Mode
+        <select id="planeMode">
+          <option value="threePoints" selected>3 Points</option>
+          <option value="normalPoint">Normal + Point</option>
+        </select>
+      </label>
+      <div id="threePoints" class="grid">
+        <div class="row"><label>P1.x <input id="p1x" type="number" value="1" step="0.1" /></label><label>P1.y <input id="p1y" type="number" value="0" step="0.1" /></label></div>
+        <div class="row"><label>P1.z <input id="p1z" type="number" value="0" step="0.1" /></label><label></label></div>
+        <div class="row"><label>P2.x <input id="p2x" type="number" value="0" step="0.1" /></label><label>P2.y <input id="p2y" type="number" value="1" step="0.1" /></label></div>
+        <div class="row"><label>P2.z <input id="p2z" type="number" value="0" step="0.1" /></label><label></label></div>
+        <div class="row"><label>P3.x <input id="p3x" type="number" value="0" step="0.1" /></label><label>P3.y <input id="p3y" type="number" value="0" step="0.1" /></label></div>
+        <div class="row"><label>P3.z <input id="p3z" type="number" value="1" step="0.1" /></label><label></label></div>
+      </div>
+      <div id="normalPoint" class="grid" style="display:none;">
+        <div class="row"><label>Point x <input id="qpx" type="number" value="0" step="0.1" /></label><label>Point y <input id="qpy" type="number" value="0" step="0.1" /></label></div>
+        <div class="row"><label>Point z <input id="qpz" type="number" value="0" step="0.1" /></label><label></label></div>
+        <div class="row"><label>Normal nx <input id="nx" type="number" value="0" step="0.1" /></label><label>Normal ny <input id="ny" type="number" value="0" step="0.1" /></label></div>
+        <div class="row"><label>Normal nz <input id="nz" type="number" value="1" step="0.1" /></label><label></label></div>
+      </div>
+      <div class="row">
+        <label>Size <input id="planeSize" type="number" value="10" min="1" max="100" /></label>
+        <label>Opacity <input id="planeOpacity" type="number" value="0.6" min="0.05" max="1" step="0.05" /></label>
+      </div>
+      <div class="row">
+        <label>Color <input id="planeColor" type="text" value="#56ccf2" /></label>
+        <label>Wireframe <select id="planeWire"><option value="0" selected>No</option><option value="1">Yes</option></select></label>
+      </div>
+      <button id="addPlane" class="btn primary">Add Plane</button>
+      <button id="clearPlanes" class="btn danger" style="margin-top:6px;">Clear Planes</button>
+    </div>
+    <div class="section">
+      <h2>Select Plane</h2>
+      <label>Active Plane
+        <select id="planeSelect"><option value="-1" selected>None</option></select>
+      </label>
+      <div class="small">The plotted point will be projected onto the selected plane.</div>
+    </div>
+    <div class="section">
+      <h2>Plot Point (on plane)</h2>
+      <div class="small">Select a plane, then set u/v offsets along that plane.</div>
+        <label for="su">u</label><input id="su" type="range" min="-5" max="5" step="0.1" value="0"></div>
+        <label for="sv">v</label><input id="sv" type="range" min="-5" max="5" step="0.1" value="0"></div>
+        <div class="row"><label for="pointSize">Size</label><input id="pointSize" type="range" min="0.1" max="1.5" step="0.1" value="0.3"></div>
+        <div class="row"><label for="pointColor">Color</label><input id="pointColor" type="color" value="#a66df2"></div>
+        <div class="row"><button id="plotPoint">Plot Point</button><button id="clearPoints">Clear Points</button></div>
+        <div class="row"><small id="posLabel">u=0, v=0</small></div>
+    </div>
+  </aside>
+
+  <div id="scene" style="position:fixed; inset:0; width:100vw; height:100vh; z-index:0;"></div>
+
+  <!-- jsDelivr for Three.js, app logic in app.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
